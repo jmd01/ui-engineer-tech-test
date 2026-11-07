@@ -18,9 +18,10 @@ const Header = styled.div`
 
   h1 {
     margin: 0;
-    font-size: var(--text-heading-lg);
+    font-size: var(--text-title);
     line-height: var(--text-title-line-height);
     font-weight: var(--text-title-weight);
+    
   }
 `;
 
@@ -117,9 +118,7 @@ function TradesPageInner() {
   return (
     <div>
       <Header>
-        <div>
           <h1>Trades</h1>
-        </div>
       </Header>
 
       <FilterRow>

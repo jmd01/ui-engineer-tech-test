@@ -34,19 +34,19 @@ const Table = styled.table`
 
   th {
     height: var(--row-md);
-    background: var(--bg-subtle);
-    color: var(--fg-secondary);
+    background: var(--bg-default);
+    color: var(--fg-tertiary);
     font-weight: var(--text-meta-weight);
     white-space: nowrap;
   }
 
   td {
-    height: var(--row-tall);
+    height: var(--row-lg);
     color: var(--fg-default);
   }
 
   tbody tr {
-    transition: background-color 300ms ease-in;
+    transition: background-color var(--duration-quick) var(--easing-standard);
   }
 
   tbody tr:hover {
@@ -59,7 +59,7 @@ const Table = styled.table`
 `;
 
 const TradeLink = styled(Link)`
-  color: #00a88b;
+  color: var(--fg-link);
   text-decoration: none;
   &:hover {
     text-decoration: underline;

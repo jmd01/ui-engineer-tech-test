@@ -24,7 +24,7 @@ export const GlobalStyle = createGlobalStyle`
   }
 
   :focus-visible {
-    outline: 2px solid ${({ theme }) => theme.colors.accent};
-    outline-offset: 2px;
+    outline: 2px solid transparent; /* keeps a visible ring in forced-colors mode */
+    box-shadow: var(--focus-ring);
   }
 `;
