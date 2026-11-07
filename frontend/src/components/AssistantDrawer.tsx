@@ -130,7 +130,7 @@ export function AssistantDrawer() {
           <div className="status">
             <span className={`dot${connected ? " connected" : ""}`} />
             <Button
-              $variant="ghost"
+              $tone="ghost"
               $size="sm"
               onClick={() => dispatch(closeAssistant())}
             >
@@ -177,7 +177,13 @@ export function AssistantDrawer() {
             placeholder="Ask the assistant…"
             aria-label="Assistant message"
           />
-          <Button type="submit" $size="sm" disabled={!connected}>
+          <Button
+            type="submit"
+            $tone="primary"
+            $color="brand"
+            $size="sm"
+            disabled={!connected}
+          >
             Send
           </Button>
         </InputForm>

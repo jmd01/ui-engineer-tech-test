@@ -2,7 +2,8 @@
 
 import styled from "styled-components";
 import Link from "next/link";
-import { Badge, statusTone } from "./ui";
+import { useSearchParams } from "next/navigation";
+import { Badge, statusLabel } from "./ui";
 import { formatDate, formatNotional } from "@/lib/format";
 import type { Trade } from "@/lib/schemas";
 
@@ -71,6 +72,10 @@ interface TradesTableProps {
 }
 
 export function TradesTable({ trades }: TradesTableProps) {
+  // Keep the list's filter in the trade URL, so the list behind the drawer
+  // stays as it was (the filter lives in the query string).
+  const qs = useSearchParams()?.toString() ?? "";
+  const suffix = qs ? `?${qs}` : "";
   return (
     <Frame>
       <Table>
@@ -88,14 +93,16 @@ export function TradesTable({ trades }: TradesTableProps) {
           {trades.map((t) => (
             <tr key={t.id}>
               <td>
-                <TradeLink href={`/trades/${t.id}`}>{t.trade_id}</TradeLink>
+                <TradeLink href={`/trades/${t.id}${suffix}`}>{t.trade_id}</TradeLink>
               </td>
               <td>{t.counterparty_name}</td>
               <td>{t.product_type}</td>
               <td>{formatNotional(t.notional_amount, t.currency_code)}</td>
               <td>{formatDate(t.trade_date)}</td>
               <td>
-                <Badge $tone={statusTone(t.status)}>{t.status}</Badge>
+                <Badge $tone="outlined" $color="neutral">
+                  {statusLabel(t.status)}
+                </Badge>
               </td>
             </tr>
           ))}

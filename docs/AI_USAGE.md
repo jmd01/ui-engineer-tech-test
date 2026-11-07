@@ -15,6 +15,7 @@ What I delegated and gave to AI to implement wholesale, and how I checked the re
 - An initial request to review the codebase, focussing on the frontend especially
 - Install and run the project
 - Part 1a: Review the task. Provide a list of issues found in code. Verify them in the browser. Create a findings document using the format described in AUDIT.md. Also provide screenshots of the ref vs build and instructions on how to verify manually. 
+- Part 2, app shell and component library: the component library gave me the visual reference and confidence it could go ahead with the build of the `/trades/[id]` page accurately. I checked them by comparing computed styles against the reference element by element (top bar, nav items, buttons, badges, facts list, text area all matched exactly) and with screenshots in `docs/screenshots/`.
 
 ## Overrode (this is important to us)
 
@@ -25,6 +26,11 @@ Where I rejected or reworked AI output. For each: include what it suggested, wha
 - Part 1a, scope: Its audit mixed in several functional bugs (counts going to 0, loading logic). I cut it to design-system mismatches only, as the brief asks.
 - Part 1a, reference is spec: It tagged the filter and badge "raise with design". The reference already answers both, so I made them discrepancies.
 - Part 1, font loading: It left the slow-loading font claim "not measured". I had it measured before keeping it: a four-request chain (HTML → CSS → Google Fonts CSS → woff2), with the font arriving at about 1.0s at 4× CPU on Fast 4G (AUDIT, "The system itself").
+- Part 2, scope: It started extending the component library towards the list view (segmented controls, filter dropdowns, table). I pulled it back to what the detail page needs, since Part 2 is only `/trades/[id]`.
+- Part 2, drawer vs page: It suggested keeping `/trades/[id]` as a full page, because the brief says to keep behaviour unless the migration needs a change. I overrode that: the brief also says it should look and behave like it belongs in the reference, and the reference opens items in a drawer over the list. We kept the URL, so links, back and refresh still work.
+- Part 2, drawer behaviour: Its first drawer pushed the list narrower, replayed the slide-in every time you opened another trade, and reset to the first tab. I had it match the reference instead: the drawer slides in over the list, opening another trade swaps the content in place, and the current tab is kept. Checked in the browser: same drawer element, 0 replayed animations, tab still on Notes.
+- Part 2, tab contents: It put Key economics under Overview. In the reference that's under Evidence, with Identifiers and the email, so I had it move them and check each tab's wording against the reference's DOM, not just which modules exist. Once I'd dropped the Arch-only content (see DECISIONS), the reference's Overview had nothing of ours left to show, so I named the tabs for our content instead: Overview (Identifiers, Key economics, emails) and Notes.
+- Part 2, empty notes: It recommended keeping Save note always enabled, to preserve behaviour. I chose to match the reference and disable it until there's text, and recorded that in DECISIONS as a deliberate behaviour change.
 
 ## Misled
 
@@ -32,9 +38,11 @@ Where AI led me down a wrong path before I caught it, for example a token that d
 
 - Part 1a, status filter: It flagged a visual difference in the filter section, but it was comparing the control bar at the top of the reference with the filter in the build. The real counterpart is the per-group status band (Disputed, Cpty alleged, …). I caught it early because I'd asked for a side-by-side image of each issue, so I could review its findings visually.
 - Part 1a/1b, loading: It said the system had no loading pattern, and I'd written that into the audit (#11, 1b, "The system itself"). When I questioned the "what's missing from the system" section, a search of `tokens.css` for "skeleton" turned up `--skeleton-base` (#F0F2F1) and `--skeleton-pulse` (#DFE2E1). It had missed tokens that exist. The real gap is narrower: the tokens exist, but no component or motion spec in the reference uses them. I corrected all three places.
+- Part 1a, page background: Its audit missed that the whole page sits on grey. I spotted it while building the shell: the build uses `--bg-subtle` (#F0F2F1), the reference's list is on `--bg-default` (#FFFFFF). I added it as #12 and had it recheck the list for anything else it had missed.
+- Part 2, drawer tabs: It built the drawer and said it matched the reference, but had only checked which modules each tab had, not what they said. When I asked if it had really compared them, it admitted it hadn't: "Suggestion" where the reference says "Arch's suggestion", no "Assigned · arrived" line under the caption, and the counterparty in the wrong place in the header. I had it compare each tab's wording against the reference's DOM. It cost a round of rework on the drawer.
 
 ## Next time
 
 Things I'd do differently on my next AI-assisted task, based on what I've learned from working on this test.
 
--
+- Settle what "match the reference" covers before building so mine and agents view is aligned. E.g. the drawer was built to look like Arch even though some of the fields in Arch aren't available in the Blotter. Asking that question first would have saved a round of building and removing.

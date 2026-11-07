@@ -25,6 +25,10 @@ const Header = styled.div`
   }
 `;
 
+const PagePad = styled.div`
+  padding: var(--space-24);
+`;
+
 const FilterRow = styled.div`
   margin-bottom: var(--space-16);
 `;
@@ -79,7 +83,11 @@ function parseStatuses(raw: string[]): TradeStatus[] {
 export default function TradesPage() {
   return (
     <Suspense
-      fallback={<TableSkeleton />}
+      fallback={
+        <PagePad>
+          <TableSkeleton />
+        </PagePad>
+      }
     >
       <TradesPageInner />
     </Suspense>
@@ -116,7 +124,7 @@ function TradesPageInner() {
   };
 
   return (
-    <div>
+    <PagePad>
       <Header>
           <h1>Trades</h1>
       </Header>
@@ -139,6 +147,6 @@ function TradesPageInner() {
       ) : (
         <TradesTable trades={trades} />
       )}
-    </div>
+    </PagePad>
   );
 }

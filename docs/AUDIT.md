@@ -99,7 +99,7 @@ Paths are relative to `frontend/src`.
 - Where: `lib/globalStyle.ts:17`
 - Expected the list on `--bg-default` (#FFFFFF), as in the reference's trades view. The build puts it on `--bg-subtle` (#F0F2F1), which isn't used in the reference.
 - Severity: follow-up. It ties into the page layout in 1b.
-- Action: deferred.
+- Action: fixed in Part 2. The page background is now `--bg-default`.
 
 
 ## 1b. Closing the gap
@@ -130,7 +130,7 @@ A few paragraphs: what you'd change next to make the page feel like it belongs i
 Anything where the system looks wrong, inconsistent, or says nothing about something the product needs.
 
 - **Font loading.** `tokens.css:3` loads Figtree with a Google Fonts `@import` inside the token stylesheet. That makes a four-request chain (HTML → CSS → Google Fonts CSS → woff2): in a Chrome trace at 4× CPU on Fast 4G the font arrived at about 1.0s and caused a layout shift when it swapped in. Suggest loading it with `next/font/google` in `app/layout.tsx`.
-- **Accessibility tokens the reference uses aren't in `tokens.css`.** The reference defines `--focus-ring-inset` (a ring inside the element, for cards and the composer) and, under `@media (prefers-contrast: more)`, strengthens `--border-control`, `--fg-tertiary`, `--fg-placeholder` and both focus rings. Neither ships, so apps on the tokens get no high-contrast support.
+- **Accessibility tokens the reference uses aren't in `tokens.css`.** The reference defines `--focus-ring-inset` (a ring inside the element, for cards and the composer) and, under `@media (prefers-contrast: more)`, strengthens `--border-control`, `--fg-tertiary`, `--fg-placeholder` and both focus rings. Neither ships, so apps on the tokens get no high-contrast support and hard-code inset rings (as `MessageCard.tsx` does).
 - **Disputed has two colours in the reference.** The group band shows it as warning (`data-color="warning"`, #BC8D03), the drawer badge as danger (`data-color="danger"`, #833226 on a red tint). One status should have one colour; I'd ask design which.
 - **Far more tokens than products use.** About a third of the 592 tokens appear neither in the reference nor in the blotter. Most are categories: 84 tokens (7 colours × 12 roles), of which the reference uses 20; category-01 repeats the brand mint, and olive (06) and "other" are never used. The rest: 32 unused alpha steps, chart palettes (`--sequential-*`, `--diverging-*`), a display type scale (36–72px, `--tracking-display-*`) with no text style using it, and `--breakpoint-*`, which can't work because custom properties aren't allowed in `@media` conditions. I'd ask design whether products need categories, and to confirm whether there are components already designed that use those tokens or whether they are bloat from an token generator, then prune the generated set to what we will be using.
 - **To check with design: values that look generated rather than chosen.** `--category-01-hover` is tinted mint but categories 02–07 hover in neutral grey; `--status-info-tint` is 10%/20% opacity where every other tint is 20%/30%, confirm if this is intentional.

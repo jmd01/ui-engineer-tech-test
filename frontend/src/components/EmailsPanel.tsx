@@ -1,88 +1,85 @@
 "use client";
 
 import styled from "styled-components";
-import { Panel, EmptyState } from "./ui";
+import { Badge, EmptyState, MessageCard, Module, Sep } from "./ui";
 import { formatDateTime } from "@/lib/format";
 import type { Email } from "@/lib/schemas";
 
+// Emails: one reference-style MessageCard per email inside a captioned module.
+
 const List = styled.ol`
+  display: grid;
+  gap: var(--space-stack-tight);
   margin: 0;
   padding: 0;
   list-style: none;
-  display: flex;
-  flex-direction: column;
-  gap: ${({ theme }) => theme.space.lg};
 `;
 
-const Item = styled.li`
-  border: 1px solid ${({ theme }) => theme.colors.border};
-  background: ${({ theme }) => theme.colors.bg};
-  border-radius: ${({ theme }) => theme.radii.md};
-  padding: ${({ theme }) => theme.space.lg};
-`;
+/** Newest first, so the latest word on a trade is at the top. The API returns
+ * oldest first. Emails without a sent time go last, in their original order. */
+function newestFirst(emails: Email[]): Email[] {
+  const time = (e: Email) => (e.sent_at ? Date.parse(e.sent_at) : NaN);
+  return [...emails].sort((a, b) => {
+    const ta = time(a);
+    const tb = time(b);
+    if (Number.isNaN(ta) || Number.isNaN(tb)) {
+      return Number(Number.isNaN(ta)) - Number(Number.isNaN(tb));
+    }
+    return tb - ta;
+  });
+}
 
-const ItemHeader = styled.header`
-  display: flex;
-  align-items: flex-start;
-  justify-content: space-between;
-  gap: ${({ theme }) => theme.space.md};
-`;
-
-const Who = styled.p`
-  margin: 0;
-  font-size: ${({ theme }) => theme.fontSizes.md};
-  font-weight: ${({ theme }) => theme.weights.medium};
-`;
-
-const Meta = styled.p`
-  margin: 4px 0 0;
-  font-size: ${({ theme }) => theme.fontSizes.xs};
-  color: ${({ theme }) => theme.colors.textFaint};
-`;
-
-const Subject = styled.p`
-  margin: ${({ theme }) => `${theme.space.sm} 0 0`};
-  font-size: ${({ theme }) => theme.fontSizes.md};
-  font-weight: ${({ theme }) => theme.weights.medium};
-  min-width: 320px;
-`;
-
-const Body = styled.p`
-  margin: ${({ theme }) => `${theme.space.sm} 0 0`};
-  font-size: ${({ theme }) => theme.fontSizes.md};
-  white-space: pre-wrap;
-  color: ${({ theme }) => theme.colors.textMuted};
-`;
-
-export function EmailsPanel({ emails }: { emails: Email[] }) {
+export function EmailsPanel({
+  emails,
+  tradeId,
+}: {
+  emails: Email[];
+  tradeId?: string;
+}) {
   if (emails.length === 0) {
     return (
-      <Panel title="Emails">
+      <Module caption="Emails">
         <EmptyState
+          size="sm"
+          align="start"
           title="No emails on this trade"
           description="Emails from the counterparty will appear here once received."
         />
-      </Panel>
+      </Module>
     );
   }
 
   return (
-    <Panel title={`Emails (${emails.length})`}>
+    <Module caption={`Emails (${emails.length})`}>
       <List>
-        {emails.map(({ id, from_name, to, subject, body, sent_at }) => (
-          <Item key={id}>
-            <ItemHeader>
-              <div>
-                <Who>{from_name}</Who>
-                <Meta>To: {to.map((r) => r.name).join(", ")}</Meta>
-              </div>
-              <Meta>{formatDateTime(sent_at)}</Meta>
-            </ItemHeader>
-            {subject ? <Subject>{subject}</Subject> : null}
-            {body ? <Body>{body}</Body> : null}
-          </Item>
+        {newestFirst(emails).map(({ id, from_name, from_address, to, subject, body, sent_at }, i) => (
+          // Only the newest email starts open; the rest show their summary.
+          <li key={id}>
+            <MessageCard
+              defaultOpen={i === 0}
+              from={from_name}
+              detail={
+                <>
+                  {from_address}
+                  <Sep />
+                  {formatDateTime(sent_at)}
+                </>
+              }
+              subject={subject ?? undefined}
+              tags={
+                tradeId ? (
+                  <Badge $tone="outlined" $color="neutral">
+                    Trade {tradeId}
+                  </Badge>
+                ) : undefined
+              }
+              headers={[{ label: "To", value: to.map((r) => r.name).join(", ") }]}
+            >
+              {body ?? undefined}
+            </MessageCard>
+          </li>
         ))}
       </List>
-    </Panel>
+    </Module>
   );
 }

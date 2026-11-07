@@ -1,39 +1,79 @@
 "use client";
 
-import styled from "styled-components";
+import styled, { css } from "styled-components";
+import type { ReactNode } from "react";
 
-const Wrap = styled.div`
-  border: 1px dashed ${({ theme }) => theme.colors.border};
-  background: ${({ theme }) => theme.colors.bg};
-  border-radius: ${({ theme }) => theme.radii.md};
-  padding: ${({ theme }) =>
-    `${theme.space.xl} ${theme.space.lg}`};
-  text-align: center;
+// Mirrors the reference's `.empty-state` (data-size, data-align).
+
+const Root = styled.div<{ $size: "sm" | "md"; $align: "center" | "start" }>`
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+  min-width: 0;
+  color: var(--fg-tertiary);
+  ${({ $align }) =>
+    $align === "start"
+      ? css`
+          align-items: flex-start;
+          text-align: start;
+        `
+      : css`
+          align-items: center;
+          text-align: center;
+        `}
+  ${({ $size }) =>
+    $size === "md"
+      ? css`
+          padding: var(--space-stack-loose) var(--space-16);
+          font-size: var(--text-body);
+          line-height: var(--text-body-line-height);
+          font-weight: var(--text-body-weight);
+        `
+      : css`
+          font-size: var(--text-meta);
+          line-height: var(--text-meta-line-height);
+          font-weight: var(--text-meta-weight);
+        `}
 `;
 
-const Title = styled.p`
+const Heading = styled.p`
   margin: 0;
-  font-size: ${({ theme }) => theme.fontSizes.md};
-  font-weight: ${({ theme }) => theme.weights.medium};
-  color: ${({ theme }) => theme.colors.textMuted};
+  color: var(--fg-secondary);
+  font-weight: var(--weight-semibold);
 `;
 
-const Description = styled.p`
-  margin: ${({ theme }) => `${theme.space.xs} 0 0`};
-  font-size: ${({ theme }) => theme.fontSizes.xs};
-  color: ${({ theme }) => theme.colors.textFaint};
+const Text = styled.p`
+  margin: 0;
+`;
+
+const Actions = styled.div<{ $align: "center" | "start" }>`
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-8);
+  margin-top: var(--space-4);
+  justify-content: ${({ $align }) => ($align === "center" ? "center" : "flex-start")};
 `;
 
 interface EmptyStateProps {
-  title: string;
+  title?: string;
   description?: string;
+  actions?: ReactNode;
+  size?: "sm" | "md";
+  align?: "center" | "start";
 }
 
-export function EmptyState({ title, description }: EmptyStateProps) {
+export function EmptyState({
+  title,
+  description,
+  actions,
+  size = "md",
+  align = "center",
+}: EmptyStateProps) {
   return (
-    <Wrap>
-      <Title>{title}</Title>
-      {description ? <Description>{description}</Description> : null}
-    </Wrap>
+    <Root $size={size} $align={align}>
+      {title ? <Heading>{title}</Heading> : null}
+      {description ? <Text>{description}</Text> : null}
+      {actions ? <Actions $align={align}>{actions}</Actions> : null}
+    </Root>
   );
 }

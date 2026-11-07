@@ -41,6 +41,6 @@ describe("TradesTable", () => {
       makeTrade({ id: "cccccccc-cccc-cccc-cccc-cccccccccccc", status: "dispute" }),
     ];
     renderWithProviders(<TradesTable trades={trades} />);
-    expect(screen.getByText("dispute")).toBeInTheDocument();
+    expect(screen.getByText("Disputed")).toBeInTheDocument();
   });
 });
