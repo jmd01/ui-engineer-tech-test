@@ -1,11 +1,11 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { memo, useEffect, useRef, useState } from "react";
 import styled from "styled-components";
 import { Button } from "./ui";
 import { useAppDispatch, useAppSelector } from "@/lib/hooks";
 import { closeAssistant } from "@/lib/slices/uiSlice";
-import { useAssistantStream } from "@/lib/ws";
+import { useAssistantStream, type ChatMessage } from "@/lib/ws";
 
 const Backdrop = styled.div<{ $open: boolean }>`
   position: fixed;
@@ -102,6 +102,35 @@ const InputForm = styled.form`
   }
 `;
 
+// Declared once at module scope. Declaring it inside the render created a new
+// component type on every render, so React remounted every bubble on every
+// streamed token and every keystroke in the input.
+const Bubble = styled.div<{ $role: ChatMessage["role"] }>`
+  padding: ${({ theme }) => `${theme.space.sm} ${theme.space.md}`};
+  border-radius: ${({ theme }) => theme.radii.md};
+  white-space: pre-wrap;
+  font-size: ${({ theme }) => theme.fontSizes.sm};
+  background: ${({ theme, $role }) =>
+    $role === "user" ? theme.colors.accentSoft : theme.colors.bg};
+  color: ${({ theme }) => theme.colors.text};
+  ${({ $role }) =>
+    $role === "user" ? "margin-left: 24px;" : "margin-right: 24px;"}
+`;
+
+// Streaming only replaces the last message object (see ws.ts), so finished
+// messages keep their identity and memo lets them skip rendering.
+const MessageBubble = memo(function MessageBubble({
+  message,
+}: {
+  message: ChatMessage;
+}) {
+  return (
+    <Bubble $role={message.role}>
+      {message.content || (message.role === "assistant" ? "…" : "")}
+    </Bubble>
+  );
+});
+
 export function AssistantDrawer() {
   const dispatch = useAppDispatch();
   const open = useAppSelector((s) => s.ui.assistantOpen);
@@ -146,26 +175,7 @@ export function AssistantDrawer() {
               see on screen.
             </Empty>
           ) : (
-            messages.map((m, i) => {
-              const Bubble = styled.div`
-                padding: ${({ theme }) =>
-                  `${theme.space.sm} ${theme.space.md}`};
-                border-radius: ${({ theme }) => theme.radii.md};
-                white-space: pre-wrap;
-                font-size: ${({ theme }) => theme.fontSizes.sm};
-                background: ${({ theme }) =>
-                  m.role === "user"
-                    ? theme.colors.accentSoft
-                    : theme.colors.bg};
-                color: ${({ theme }) => theme.colors.text};
-                margin-${m.role === "user" ? "left" : "right"}: 24px;
-              `;
-              return (
-                <Bubble key={i}>
-                  {m.content || (m.role === "assistant" ? "…" : "")}
-                </Bubble>
-              );
-            })
+            messages.map((m) => <MessageBubble key={m.id} message={m} />)
           )}
         </Messages>
 

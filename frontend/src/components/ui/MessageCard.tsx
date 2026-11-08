@@ -2,6 +2,7 @@
 
 import { useId, useState, type ReactNode } from "react";
 import styled, { css } from "styled-components";
+import { Skeleton } from "./Skeleton";
 
 // Mirrors the reference's email card: a `.frame` (inset loose) whose head is a
 // `.collapsible-trigger`, with `.message-card-*` parts inside.
@@ -17,13 +18,17 @@ const Frame = styled.article`
 // The system's "flat" collapsible trigger: no hover tint (a tinted block over
 // half an open card reads as a separate panel). Hover darkens the chevron;
 // keyboard focus gets a ring drawn inside the card's edge.
-const Head = styled.button`
+const headLayout = css`
   width: 100%;
   box-sizing: border-box;
   display: flex;
   flex-direction: column;
   gap: var(--space-16);
   padding: var(--space-16);
+`;
+
+const Head = styled.button`
+  ${headLayout}
   border: 0;
   /* The whole summary (sender + subject) is the click target. */
   border-radius: var(--radius-surface) var(--radius-surface) 0 0;
@@ -246,6 +251,40 @@ export function MessageCard({
           </Body>
         </div>
       </Collapse>
+    </Frame>
+  );
+}
+
+// Placeholder with the card's layout: sender, address and subject, plus the
+// opened body (To line and a few lines of text) when `open`.
+const SkeletonHead = styled.div`
+  ${headLayout}
+`;
+
+export function MessageCardSkeleton({ open = false }: { open?: boolean }) {
+  return (
+    <Frame aria-hidden="true">
+      <SkeletonHead>
+        <TopRow>
+          <From>
+            <Skeleton $text="body-compact" $width="120px" />
+            <Skeleton $text="meta" $width="220px" />
+          </From>
+        </TopRow>
+        <Skeleton $text="body-compact" $width="70%" />
+      </SkeletonHead>
+      {open ? (
+        <Body>
+          <Headers as="div">
+            <Skeleton $text="meta" $width="160px" />
+          </Headers>
+          <Text as="div">
+            <Skeleton $text="body" />
+            <Skeleton $text="body" />
+            <Skeleton $text="body" $width="60%" />
+          </Text>
+        </Body>
+      ) : null}
     </Frame>
   );
 }

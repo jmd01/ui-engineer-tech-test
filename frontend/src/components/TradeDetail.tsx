@@ -3,12 +3,14 @@
 import { useEffect, useId, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import styled from "styled-components";
-import { useGetTradeQuery } from "@/lib/api/tradesApi";
+import { useGetTradeQuery, useListTradesQuery } from "@/lib/api/tradesApi";
+import { parseStatuses } from "@/lib/statusParams";
 import {
   Badge,
-  EmptyState,
   IconButton,
   PageHead,
+  Skeleton,
+  SkeletonStatus,
   TabList,
   panelId,
   statusColor,
@@ -17,8 +19,8 @@ import {
   type TabItem,
 } from "./ui";
 import { TradeMetadata } from "./TradeMetadata";
-import { EmailsPanel } from "./EmailsPanel";
-import { NotesPanel } from "./NotesPanel";
+import { EmailsPanel, EmailsPanelSkeleton } from "./EmailsPanel";
+import { NotesPanel, NotesPanelSkeleton } from "./NotesPanel";
 import { useDrawerTab } from "./TradeDrawer";
 
 // One trade in the drawer, shown the way the reference shows an item: a
@@ -63,8 +65,21 @@ function CloseIcon() {
 
 export function TradeDetail({ id }: { id: string }) {
   const router = useRouter();
-  const listQuery = useSearchParams()?.toString() ?? "";
+  const params = useSearchParams();
+  const listQuery = params?.toString() ?? "";
   const query = useGetTradeQuery(id);
+  // The trade itself, or nothing while it loads. (currentData, not data, so a
+  // previous trade is never shown under this one's URL.)
+  const trade = query.currentData;
+
+  // While the trade loads, show what the list already knows about it (the
+  // header and key economics), so only emails and notes wait. On a
+  // refresh or deep link the list may not have it yet; then it's a placeholder.
+  const statuses = parseStatuses(params?.getAll("status") ?? []);
+  const { listed } = useListTradesQuery(statuses.length > 0 ? statuses : undefined, {
+    selectFromResult: ({ data }) => ({ listed: data?.find((t) => t.id === id) }),
+  });
+  const head = trade ?? listed;
 
   // The tab is held by the trades layout, so it carries over when you open
   // another trade. (Local fallback only if rendered outside that layout.)
@@ -75,6 +90,8 @@ export function TradeDetail({ id }: { id: string }) {
 
   const prefix = useId();
   const headingId = `${prefix}-heading`;
+
+  const close = () => router.push(listQuery ? `/trades?${listQuery}` : "/trades");
 
   // Closing goes back to the list as it was (same filter).
   useEffect(() => {
@@ -88,38 +105,32 @@ export function TradeDetail({ id }: { id: string }) {
 
   // Focus the heading when a trade opens.
   useEffect(() => {
-    if (!query.data) return;
+    if (!trade) return;
     document.getElementById(headingId)?.focus();
-  }, [query.data, headingId]);
-
-  if (query.isLoading) {
-    return (
-      <Root>
-        <EmptyState size="md" align="start" description="Loading…" />
-      </Root>
-    );
-  }
+  }, [trade, headingId]);
 
   // Unchanged from before the migration: an error renders nothing (see DECISIONS).
-  if (query.isError || !query.data) {
+  if (query.isError) {
     return null;
   }
 
-  const trade = query.data;
-  const close = () => router.push(listQuery ? `/trades?${listQuery}` : "/trades");
-
   return (
-    <Root>
+    <Root aria-busy={trade ? undefined : true}>
+      {trade ? null : <SkeletonStatus>Loading trade</SkeletonStatus>}
       <PageHead
         size="drawer"
         as="h1"
         headingId={headingId}
-        caption={trade.trade_id}
-        heading={trade.counterparty_name}
+        caption={head ? head.trade_id : <Skeleton $text="meta" $width="80px" />}
+        heading={head ? head.counterparty_name : <Skeleton $text="heading-lg" $width="180px" />}
         tags={
-          <Badge $tone="subtle" $color={statusColor(trade.status)}>
-            {statusLabel(trade.status)}
-          </Badge>
+          head ? (
+            <Badge $tone="subtle" $color={statusColor(head.status)}>
+              {statusLabel(head.status)}
+            </Badge>
+          ) : (
+            <Skeleton $shape="badge" />
+          )
         }
         end={
           <IconButton $size="sm" aria-label="Close trade" onClick={close}>
@@ -144,16 +155,24 @@ export function TradeDetail({ id }: { id: string }) {
         >
           {tab === "overview" ? (
             <>
-              <TradeMetadata trade={trade} />
-              <EmailsPanel emails={trade.emails} tradeId={trade.trade_id} />
+              <TradeMetadata trade={head} />
+              {trade ? (
+                <EmailsPanel emails={trade.emails} tradeId={trade.trade_id} />
+              ) : (
+                <EmailsPanelSkeleton />
+              )}
             </>
           ) : null}
           {tab === "notes" ? (
-            <NotesPanel
-              tradeId={trade.id}
-              status={trade.status}
-              notes={trade.notes}
-            />
+            trade ? (
+              <NotesPanel
+                tradeId={trade.id}
+                status={trade.status}
+                notes={trade.notes}
+              />
+            ) : (
+              <NotesPanelSkeleton />
+            )
           ) : null}
         </div>
       </Body>

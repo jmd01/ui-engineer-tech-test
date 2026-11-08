@@ -2,12 +2,13 @@
 
 import { Suspense, useMemo } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
-import styled, { keyframes } from "styled-components";
+import styled from "styled-components";
 import { useListTradesQuery } from "@/lib/api/tradesApi";
-import { TradeStatusSchema, type TradeStatus } from "@/lib/schemas";
+import type { TradeStatus } from "@/lib/schemas";
+import { parseStatuses } from "@/lib/statusParams";
 import { StatusFilter } from "@/components/StatusFilter";
-import { TradesTable } from "@/components/TradesTable";
-import { EmptyState } from "@/components/ui";
+import { TradesTable, TradesTableSkeleton } from "@/components/TradesTable";
+import { EmptyState, Skeleton } from "@/components/ui";
 
 const Header = styled.div`
   display: flex;
@@ -21,7 +22,6 @@ const Header = styled.div`
     font-size: var(--text-title);
     line-height: var(--text-title-line-height);
     font-weight: var(--text-title-weight);
-    
   }
 `;
 
@@ -33,59 +33,19 @@ const FilterRow = styled.div`
   margin-bottom: var(--space-16);
 `;
 
-const shimmer = keyframes`
-  from { left: -40%; }
-  to { left: 100%; }
-`;
-
-const SkeletonRow = styled.div`
-  position: relative;
-  overflow: hidden;
-  height: var(--row-lg);
-  margin-bottom: var(--space-4);
-  border-radius: var(--radius-small);
-  background: #eef0ef;
-
-  &::after {
-    content: "";
-    position: absolute;
-    top: 0;
-    bottom: 0;
-    left: -40%;
-    width: 40%;
-    background: linear-gradient(
-      90deg,
-      transparent,
-      rgba(255, 255, 255, 0.7),
-      transparent
-    );
-    animation: ${shimmer} 1.2s linear infinite;
-  }
-`;
-
-function TableSkeleton() {
-  return (
-    <div>
-      {Array.from({ length: 8 }, (_, i) => (
-        <SkeletonRow key={i} />
-      ))}
-    </div>
-  );
-}
-
-function parseStatuses(raw: string[]): TradeStatus[] {
-  return raw.flatMap((s) => {
-    const parsed = TradeStatusSchema.safeParse(s);
-    return parsed.success ? [parsed.data] : [];
-  });
-}
-
 export default function TradesPage() {
   return (
     <Suspense
       fallback={
+        // Same layout as the loaded page, so nothing moves when it renders.
         <PagePad>
-          <TableSkeleton />
+          <Header>
+            <h1>Trades</h1>
+          </Header>
+          <FilterRow>
+            <Skeleton $shape="block" $width="420px" $height="var(--control-md-height)" />
+          </FilterRow>
+          <TradesTableSkeleton />
         </PagePad>
       }
     >
@@ -126,7 +86,7 @@ function TradesPageInner() {
   return (
     <PagePad>
       <Header>
-          <h1>Trades</h1>
+        <h1>Trades</h1>
       </Header>
 
       <FilterRow>
@@ -138,7 +98,7 @@ function TradesPageInner() {
       </FilterRow>
 
       {query.isLoading ? (
-        <TableSkeleton />
+        <TradesTableSkeleton />
       ) : query.isError ? (
         <EmptyState
           title="Failed to load trades"

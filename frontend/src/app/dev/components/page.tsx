@@ -16,6 +16,7 @@ import {
   Module,
   PageHead,
   Sep,
+  Skeleton,
   TextArea,
   statusColor,
   statusLabel,
@@ -336,6 +337,40 @@ export default function ComponentsGallery() {
             actions={<Button>Clear filter</Button>}
           />
           <EmptyState size="sm" align="start" description="No notes yet." />
+        </Surface>
+      </Section>
+
+      <Section>
+        <H2>Skeleton</H2>
+        <Note>
+          Each text bar takes its text style&apos;s line height, so it fills the
+          same space as the text it stands in for (real text on the right).
+        </Note>
+        <Surface>
+          {(["title", "heading-lg", "heading", "body", "body-compact", "label", "meta"] as const).map((t) => (
+            <Row key={t}>
+              <RowLabel>text · {t}</RowLabel>
+              <Skeleton $text={t} $width="160px" />
+              <span
+                style={{
+                  fontSize: `var(--text-${t})`,
+                  lineHeight: `var(--text-${t}-line-height)`,
+                  fontWeight: `var(--text-${t}-weight)`,
+                }}
+              >
+                Barclays Bank PLC
+              </span>
+            </Row>
+          ))}
+          <Row>
+            <RowLabel>badge</RowLabel>
+            <Skeleton $shape="badge" />
+            <Badge $tone="outlined" $color="neutral">Disputed</Badge>
+          </Row>
+          <Row>
+            <RowLabel>block</RowLabel>
+            <Skeleton $shape="block" $width="240px" $height="64px" />
+          </Row>
         </Surface>
       </Section>
     </Page>

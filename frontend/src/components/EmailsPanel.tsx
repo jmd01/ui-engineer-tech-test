@@ -1,7 +1,7 @@
 "use client";
 
 import styled from "styled-components";
-import { Badge, EmptyState, MessageCard, Module, Sep } from "./ui";
+import { Badge, EmptyState, MessageCard, MessageCardSkeleton, Module, Sep } from "./ui";
 import { formatDateTime } from "@/lib/format";
 import type { Email } from "@/lib/schemas";
 
@@ -79,6 +79,18 @@ export function EmailsPanel({
             </MessageCard>
           </li>
         ))}
+      </List>
+    </Module>
+  );
+}
+
+/** While the trade loads: two cards, the first open, as the loaded list shows. */
+export function EmailsPanelSkeleton() {
+  return (
+    <Module caption="Emails">
+      <List as="div">
+        <MessageCardSkeleton open />
+        <MessageCardSkeleton />
       </List>
     </Module>
   );

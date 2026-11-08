@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import styled from "styled-components";
-import { Button, CharCount, EmptyState, Field, Module, TextArea } from "./ui";
+import { Button, CharCount, EmptyState, Field, Module, Skeleton, TextArea } from "./ui";
 import { useSubmitNoteMutation } from "@/lib/api/tradesApi";
 import { formatDateTime } from "@/lib/format";
 import { BREAK_STATUSES, type Note, type TradeStatus } from "@/lib/schemas";
@@ -140,6 +140,22 @@ export function NotesPanel({ tradeId, status, notes }: NotesPanelProps) {
           ))}
         </List>
       )}
+    </Module>
+  );
+}
+
+/** While the trade loads: a couple of placeholder entries. */
+export function NotesPanelSkeleton() {
+  return (
+    <Module caption="Notes">
+      <List as="div">
+        {["80%", "55%"].map((w) => (
+          <Entry as="div" key={w}>
+            <Skeleton $text="body" $width={w} />
+            <Skeleton $text="meta" $width="112px" style={{ marginTop: "var(--space-2)" }} />
+          </Entry>
+        ))}
+      </List>
     </Module>
   );
 }
